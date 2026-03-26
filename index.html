@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PERT-Methode – Baukostenprognose</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f0e0c;
+    --paper: #f5f2ec;
+    --cream: #ede9e0;
+    --accent: #c8441a;
+    --accent2: #2b5f3e;
+    --accent3: #1a3a6b;
+    --warm: #d4a853;
+    --muted: #7a7165;
+    --border: #d6d0c4;
+    --card: #faf8f4;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1.2rem, 3vw, 3rem);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    position: relative;
+    overflow: hidden;
+    flex-wrap: wrap;
+  }
+
+  header::before {
+    content: 'PERT';
+    position: absolute;
+    right: -20px;
+    top: -20px;
+    font-family: 'DM Serif Display', serif;
+    font-size: 14rem;
+    color: rgba(255,255,255,0.04);
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .header-left h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.6rem;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .header-left h1 em {
+    color: var(--warm);
+    font-style: italic;
+  }
+
+  .header-left p {
+    margin-top: 0.5rem;
+    font-size: 0.82rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(245,242,236,0.75);
+    font-family: 'Inter', sans-serif;
+  }
+
+  .header-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+  }
+
+  .header-badge span {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(245,242,236,0.65);
+    font-family: 'Inter', sans-serif;
+  }
+
+  .header-badge strong {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 0.01em;
+    line-height: 1.3;
+  }
+
+  /* MAIN LAYOUT */
+  main {
+    display: grid;
+    grid-template-columns: clamp(280px, 28%, 420px) 1fr;
+    gap: 0;
+    min-height: calc(100vh - 130px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    background: var(--cream);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-height: calc(100vh - 130px);
+  }
+
+  .section-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* PROJECT INFO */
+  .project-block input,
+  .project-block select {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 0.65rem 0.75rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s;
+    margin-bottom: 0.6rem;
+    height: 2.6rem;
+    box-sizing: border-box;
+  }
+
+  .project-block input:focus,
+  .project-block select:focus {
+    border-color: var(--accent3);
+  }
+
+  .project-block label {
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+  }
+
+  /* GEWERKE TABLE */
+  .gewerke-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .gewerk-row {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.9rem;
+    position: relative;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .gewerk-row:hover { border-color: var(--accent3); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+  .gewerk-row .gewerk-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .gewerk-color-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.4rem;
+  }
+
+  .gewerk-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.4rem;
+  }
+
+  .gewerk-inputs input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 0.45rem 0.5rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    background: var(--paper);
+    color: var(--ink);
+    outline: none;
+    text-align: right;
+    transition: border-color 0.15s;
+  }
+
+  /* FORMATTED NUMBER INPUTS */
+  .num-wrapper {
+    position: relative;
+  }
+  .num-display {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 0.45rem 0.5rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    background: var(--paper);
+    color: var(--ink);
+    outline: none;
+    text-align: right;
+    transition: border-color 0.15s;
+    cursor: text;
+    min-height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .num-display.editing { display: none; }
+  .num-edit {
+    width: 100%;
+    border: 1px solid var(--accent3);
+    border-radius: 2px;
+    padding: 0.45rem 0.5rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    background: #fff;
+    color: var(--ink);
+    outline: none;
+    text-align: right;
+    display: none;
+  }
+  .num-edit.editing { display: block; }
+
+  .input-hint {
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 0.2rem;
+    font-weight: 500;
+  }
+
+  .del-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 18px;
+    height: 18px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    transition: background 0.1s, color 0.1s;
+  }
+  .del-btn:hover { background: var(--accent); color: #fff; }
+
+  .add-btn {
+    width: 100%;
+    padding: 0.65rem;
+    border: 1px dashed var(--border);
+    background: transparent;
+    border-radius: 3px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+  .add-btn:hover { border-color: var(--accent3); color: var(--accent3); background: rgba(27,58,107,0.04); }
+
+  /* SECURITY LEVEL */
+  .security-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+
+  .sec-btn {
+    padding: 0.9rem 0.5rem 0.75rem;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    border-radius: 4px;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: center;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .sec-btn:hover {
+    border-color: var(--accent3);
+    background: rgba(27,58,107,0.04);
+    color: var(--accent3);
+  }
+
+  .sec-btn.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  .sec-btn .sec-pct {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.55rem;
+    font-weight: 800;
+    display: block;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .sec-btn .sec-desc {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    opacity: 0.8;
+  }
+
+  .sec-btn.active .sec-desc { opacity: 0.7; }
+
+  /* CONTENT AREA */
+  .content {
+    padding: clamp(1rem, 2vw, 2rem) clamp(1rem, 2.5vw, 2.5rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-width: 0;
+  }
+
+  /* KPI CARDS */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1.25rem 1.4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+
+  .kpi-card.kpi-ew::before { background: var(--accent3); }
+  .kpi-card.kpi-84::before { background: var(--accent2); }
+  .kpi-card.kpi-975::before { background: var(--warm); }
+  .kpi-card.kpi-sd::before { background: var(--muted); }
+
+  .kpi-card .kpi-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+
+  .kpi-card .kpi-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.9rem;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .kpi-card.kpi-ew .kpi-value { color: var(--accent3); }
+  .kpi-card.kpi-84 .kpi-value { color: var(--accent2); }
+  .kpi-card.kpi-975 .kpi-value { color: var(--warm); }
+  .kpi-card.kpi-sd .kpi-value { color: var(--muted); }
+
+  .kpi-card .kpi-sub {
+    font-size: 0.73rem;
+    color: var(--muted);
+    margin-top: 0.4rem;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* CHARTS ROW */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .chart-block {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.9rem 1.1rem 0.7rem;
+    display: flex;
+    flex-direction: column;
+    height: 330px;
+  }
+
+  .chart-block h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin-bottom: 0;
+    color: var(--ink);
+    flex-shrink: 0;
+  }
+
+  /* Kostenverteilung: chart pushed up (less gap below title) */
+  .chart-block.block-pie {
+    justify-content: flex-start;
+  }
+  .chart-block.block-pie h3 {
+    margin-bottom: 0.2rem;
+  }
+  .chart-block.block-pie canvas {
+    margin-top: 0;
+    flex: 1;
+  }
+
+  /* Szenariovergleich: chart pushed down (more gap below title) */
+  .chart-block.block-bar {
+    justify-content: flex-end;
+  }
+  .chart-block.block-bar h3 {
+    margin-bottom: auto;
+  }
+  .chart-block.block-bar canvas {
+    flex: none;
+    height: 260px !important;
+  }
+
+  canvas { width: 100% !important; }
+
+  /* DISTRIBUTION CURVE */
+  .dist-block {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1.4rem;
+  }
+
+  .dist-block h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+    color: var(--ink);
+  }
+
+  /* RESULTS TABLE */
+  .results-block {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .results-header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0.85rem 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .results-header h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  thead th {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0.7rem 1.4rem;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    background: var(--cream);
+    font-weight: 600;
+  }
+
+  thead th:first-child { text-align: left; }
+
+  tbody tr:not(:last-child) { border-bottom: 1px solid var(--border); }
+  tbody tr:hover { background: rgba(0,0,0,0.02); }
+
+  tbody td {
+    padding: 0.75rem 1.4rem;
+    text-align: right;
+    font-family: 'Inter', sans-serif;
+  }
+
+  tbody td:first-child { text-align: left; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.85rem; }
+
+  tfoot td {
+    padding: 1rem 1.4rem;
+    text-align: right;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    background: var(--accent3);
+    color: #ffffff;
+    border-top: 3px solid var(--accent3);
+    font-size: 0.9rem;
+    letter-spacing: 0.01em;
+  }
+
+  tfoot td:first-child {
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 0.92rem;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    line-height: 1.35;
+  }
+
+  .tag-o { background: #dbeafe; color: #1d4ed8; padding: 0.15rem 0.45rem; border-radius: 2px; font-size: 0.72rem; font-weight: 600; }
+  .tag-m { background: #d1fae5; color: #065f46; padding: 0.15rem 0.45rem; border-radius: 2px; font-size: 0.72rem; font-weight: 600; }
+  .tag-p { background: #fee2e2; color: #991b1b; padding: 0.15rem 0.45rem; border-radius: 2px; font-size: 0.72rem; font-weight: 600; }
+
+  /* FORMULA BOX */
+  .formula-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+
+  .formula-card {
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 3px;
+    padding: 1.2rem 1.4rem;
+  }
+
+  .formula-card .f-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(245,242,236,0.85);
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+  }
+
+  .formula-card .f-formula {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.05rem;
+    color: var(--warm);
+    line-height: 1.6;
+  }
+
+  .formula-card .f-desc {
+    font-size: 0.75rem;
+    color: rgba(245,242,236,0.82);
+    margin-top: 0.5rem;
+    line-height: 1.6;
+  }
+
+  /* RESPONSIVE adjustments */
+  @media (max-width: 1300px) {
+    main { grid-template-columns: clamp(260px, 26%, 380px) 1fr; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .formula-row { grid-template-columns: 1fr 1fr; }
+    .content { padding: 1.5rem; }
+  }
+
+  @media (max-width: 1050px) {
+    main { grid-template-columns: clamp(240px, 30%, 320px) 1fr; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .formula-row { grid-template-columns: 1fr; }
+    .charts-row { grid-template-columns: 1fr; }
+    .content { padding: 1.2rem; gap: 1.2rem; }
+    header { padding: 1.8rem 1.5rem; }
+  }
+
+  @media (max-width: 800px) {
+    main { grid-template-columns: 1fr; }
+    header { flex-direction: column; align-items: flex-start; padding: 1.5rem; }
+    .kpi-row { grid-template-columns: 1fr 1fr; }
+    .content { padding: 1rem; }
+    .sidebar { padding: 1rem; }
+  }
+
+  /* ANIMATIONS */
+  .kpi-value { transition: all 0.3s ease; }
+
+  .gewerk-row { animation: slideIn 0.2s ease; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .no-data {
+    text-align: center;
+    padding: 2rem;
+    color: var(--muted);
+    font-size: 0.88rem;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Baukostenprognose<br><em>PERT-Methode</em></h1>
+    <p>Drei-Punkt-Schätzung · Erwartungswert · Risikobewertung</p>
+  </div>
+  <div class="header-badge">
+    <span>Methode</span>
+    <strong>Program Evaluation & Review Technique</strong>
+    <span style="margin-top:0.5rem;">EW = (O + 4M + P) / 6</span>
+    <button onclick="exportPDF()" style="margin-top:1rem; padding:0.5rem 1.1rem; background:var(--warm); color:var(--ink); border:none; border-radius:3px; font-family:'Syne',sans-serif; font-weight:700; font-size:0.82rem; cursor:pointer; letter-spacing:0.04em; transition:opacity 0.15s;" onmouseover="this.style.opacity=0.85" onmouseout="this.style.opacity=1">
+      ⬇ PDF exportieren
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- Project Info -->
+    <div class="project-block">
+      <div class="section-label">Projektinformationen</div>
+      <label>Projektbezeichnung</label>
+      <input type="text" id="projName" placeholder="z.B. Bürogebäude München" value="Bürogebäude – LPH 2">
+      <label>BGF in m²</label>
+      <input type="number" id="projBGF" placeholder="3000" value="3000">
+      <label>Leistungsphase</label>
+      <select id="projLP">
+        <option value="LPH 1">LPH 1 – Grundlagenermittlung</option>
+        <option value="LPH 2" selected>LPH 2 – Vorplanung</option>
+        <option value="LPH 3">LPH 3 – Entwurfsplanung</option>
+        <option value="LPH 4">LPH 4 – Genehmigungsplanung</option>
+        <option value="LPH 5">LPH 5 – Ausführungsplanung</option>
+      </select>
+    </div>
+
+    <!-- Gewerke -->
+    <div>
+      <div class="section-label">Gewerke / Kostenpositionen</div>
+      <div class="gewerke-list" id="gewerkeListe"></div>
+      <button class="add-btn" onclick="addGewerk()">+ Kostenposition hinzufügen</button>
+    </div>
+
+    <!-- Security Level -->
+    <div>
+      <div class="section-label">Sicherheitsniveau</div>
+      <div class="security-selector">
+        <button class="sec-btn" data-sd="0" onclick="setSecurity(0)">
+          <span class="sec-pct">50%</span>
+          <span class="sec-desc">Erwartungswert</span>
+        </button>
+        <button class="sec-btn active" data-sd="1" onclick="setSecurity(1)">
+          <span class="sec-pct">84%</span>
+          <span class="sec-desc">Budget+</span>
+        </button>
+        <button class="sec-btn" data-sd="2" onclick="setSecurity(2)">
+          <span class="sec-pct">97,5%</span>
+          <span class="sec-desc">Konservativ</span>
+        </button>
+      </div>
+      <div style="margin-top:0.75rem; font-size:0.78rem; color:var(--muted); line-height:1.6;" id="secDesc">
+        <strong>84%-Niveau (EW + 1 SD):</strong> Empfohlen für dynamische Marktumfelder. Wahrscheinlichkeit einer Budgetüberschreitung ca. 16%.
+      </div>
+    </div>
+
+    <!-- Copyright -->
+    <div class="sidebar-copyright" style="margin-top:auto; padding-top:1.2rem; border-top:1px solid var(--border); font-family:'Inter',sans-serif;">
+      <div style="font-size:0.78rem; color:var(--ink); font-weight:600; line-height:1.5;">
+        <span style="opacity:0.7;">©</span> Bernhard Metzger
+      </div>
+      <div style="font-size:0.78rem; font-family:'Syne',sans-serif; font-weight:700; color:var(--ink);">BuiltSmart Hub</div>
+      <div style="font-size:0.7rem; color:var(--muted); margin-top:0.1rem;">www.built-smart-hub.com</div>
+    </div>
+
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- KPI Row -->
+    <div class="kpi-row">
+      <div class="kpi-card kpi-ew">
+        <div class="kpi-label">Erwartungswert (EW)</div>
+        <div class="kpi-value" id="kpiEW">–</div>
+        <div class="kpi-sub" id="kpiEWsub">EW = (O + 4M + P) / 6</div>
+      </div>
+      <div class="kpi-card kpi-84">
+        <div class="kpi-label" id="kpi84label">Budget 84%-Niveau</div>
+        <div class="kpi-value" id="kpi84">–</div>
+        <div class="kpi-sub" id="kpi84sub">EW + 1 × SD</div>
+      </div>
+      <div class="kpi-card kpi-975">
+        <div class="kpi-label">Budget 97,5%-Niveau</div>
+        <div class="kpi-value" id="kpi975">–</div>
+        <div class="kpi-sub">EW + 2 × SD</div>
+      </div>
+      <div class="kpi-card kpi-sd">
+        <div class="kpi-label">Standardabweichung (SD)</div>
+        <div class="kpi-value" id="kpiSD">–</div>
+        <div class="kpi-sub">SD = (P − O) / 6</div>
+      </div>
+    </div>
+
+    <!-- Formulas -->
+    <div class="formula-row">
+      <div class="formula-card">
+        <div class="f-label">Erwartungswert</div>
+        <div class="f-formula">EW = (O + 4·M + P) / 6</div>
+        <div class="f-desc">Gewichteter Mittelwert mit 4-facher Gewichtung des wahrscheinlichsten Wertes.</div>
+      </div>
+      <div class="formula-card">
+        <div class="f-label">Standardabweichung</div>
+        <div class="f-formula">SD = (P − O) / 6</div>
+        <div class="f-desc">Basiert auf 6σ-Annahme: O und P liegen je ±3 SD vom Erwartungswert entfernt.</div>
+      </div>
+      <div class="formula-card">
+        <div class="f-label">Gesamtvarianz (Aggregation)</div>
+        <div class="f-formula">Var<sub>ges</sub> = Σ SD²<br>SD<sub>ges</sub> = √Var<sub>ges</sub></div>
+        <div class="f-desc">Varianzen werden addiert, nicht Standardabweichungen – mathematisch korrekte Aggregation.</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row">
+      <div class="chart-block block-pie">
+        <h3>Kostenverteilung nach Gewerken</h3>
+        <canvas id="chartGewerke"></canvas>
+      </div>
+      <div class="chart-block block-bar">
+        <h3>Szenariovergleich (O / EW / M / P)</h3>
+        <canvas id="chartSzenarien" height="260"></canvas>
+      </div>
+    </div>
+
+    <!-- Distribution -->
+    <div class="dist-block">
+      <h3>Normalverteilungskurve – Wahrscheinlichkeitsverteilung der Baukosten</h3>
+      <canvas id="chartDist" height="320"></canvas>
+    </div>
+
+    <!-- Results Table -->
+    <div class="results-block">
+      <div class="results-header">
+        <h3>Detailauswertung nach Gewerken</h3>
+        <span style="font-size:0.78rem; opacity:0.6; font-family:'Inter',sans-serif;" id="projInfo">–</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Gewerk</th>
+            <th><span class="tag-o">O</span> Optimistisch</th>
+            <th><span class="tag-m">M</span> Wahrsch.</th>
+            <th><span class="tag-p">P</span> Pessimistisch</th>
+            <th>Erwartungswert</th>
+            <th>SD</th>
+            <th>Varianz</th>
+            <th>Spannweite</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody">
+          <tr><td colspan="8" class="no-data">Noch keine Kostenpositionen erfasst.</td></tr>
+        </tbody>
+        <tfoot id="resultsFoot"></tfoot>
+      </table>
+    </div>
+
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+// ——— STATE ———
+let gewerke = [];
+let secLevel = 1; // 0=50%, 1=84%, 2=97.5%
+let chartGewerke, chartSzenarien, chartDist;
+
+const COLORS = ['#1a3a6b','#c8441a','#2b5f3e','#d4a853','#7a3fa0','#0e7490','#9f580a','#155e75'];
+const SEC_LABELS = ['50%','84%','97,5%'];
+const SEC_SD = [0, 1, 2];
+const SEC_DESCS = [
+  '<strong>50%-Niveau (Erwartungswert):</strong> Operative Projektsteuerung. Wahrscheinlichkeit einer Überschreitung ca. 50%.',
+  '<strong>84%-Niveau (EW + 1 SD):</strong> Empfohlen für dynamische Marktumfelder. Wahrscheinlichkeit einer Budgetüberschreitung ca. 16%.',
+  '<strong>97,5%-Niveau (EW + 2 SD):</strong> Für risikoaverse Investoren und Finanzierungsentscheidungen. Überschreitungsrisiko ca. 2,5%.'
+];
+
+const defaultGewerke = [
+  { name: 'Rohbau', o: 3600000, m: 4000000, p: 4800000 },
+  { name: 'Technische Gebäudeausrüstung', o: 950000, m: 1100000, p: 1450000 },
+  { name: 'Ausbau & Fassade', o: 800000, m: 950000, p: 1200000 },
+];
+
+// ——— INIT ———
+function init() {
+  defaultGewerke.forEach(g => gewerke.push({ ...g, id: uid() }));
+  renderGewerke();
+  initCharts();
+  calculate();
+}
+
+function uid() { return Math.random().toString(36).substr(2,8); }
+
+// ——— GEWERK CRUD ———
+function addGewerk() {
+  gewerke.push({ id: uid(), name: 'Neues Gewerk', o: 0, m: 0, p: 0 });
+  renderGewerke();
+  calculate();
+}
+
+function removeGewerk(id) {
+  gewerke = gewerke.filter(g => g.id !== id);
+  renderGewerke();
+  calculate();
+}
+
+function updateGewerk(id, field, val) {
+  const g = gewerke.find(g => g.id === id);
+  if (!g) return;
+  g[field] = field === 'name' ? val : (parseFloat(val) || 0);
+  calculate();
+}
+
+function fmtInput(n) {
+  if (!n && n !== 0) return '';
+  return new Intl.NumberFormat('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n) + ' €';
+}
+
+function renderGewerke() {
+  const list = document.getElementById('gewerkeListe');
+  list.innerHTML = gewerke.map((g, i) => `
+    <div class="gewerk-row">
+      <button class="del-btn" onclick="removeGewerk('${g.id}')">✕</button>
+      <div class="gewerk-name">
+        <span>
+          <span class="gewerk-color-dot" style="background:${COLORS[i % COLORS.length]}"></span>
+          <input type="text" value="${g.name}" onchange="updateGewerk('${g.id}','name',this.value)"
+            style="border:none;background:transparent;font-family:'Syne',sans-serif;font-size:0.88rem;font-weight:700;width:160px;outline:none;padding:0;cursor:text;"
+          >
+        </span>
+      </div>
+      <div class="gewerk-inputs">
+        ${['o','m','p'].map((field, fi) => {
+          const colors = ['#1d4ed8','#065f46','#991b1b'];
+          const labels = ['Optimistisch','Wahrscheinlich','Pessimistisch'];
+          const val = g[field];
+          return `<div>
+            <div class="num-wrapper">
+              <div class="num-display" id="disp_${g.id}_${field}"
+                onclick="startEdit('${g.id}','${field}')">${fmtInput(val)}</div>
+              <input class="num-edit" id="edit_${g.id}_${field}" type="number" value="${val}"
+                onblur="endEdit('${g.id}','${field}',this.value)"
+                onkeydown="if(event.key==='Enter')this.blur()"
+                placeholder="0">
+            </div>
+            <div class="input-hint" style="color:${colors[fi]}">${labels[fi]}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function startEdit(id, field) {
+  const disp = document.getElementById(`disp_${id}_${field}`);
+  const edit = document.getElementById(`edit_${id}_${field}`);
+  disp.classList.add('editing');
+  edit.classList.add('editing');
+  edit.focus();
+  edit.select();
+}
+
+function endEdit(id, field, val) {
+  updateGewerk(id, field, val);
+  const disp = document.getElementById(`disp_${id}_${field}`);
+  const edit = document.getElementById(`edit_${id}_${field}`);
+  const g = gewerke.find(g => g.id === id);
+  if (disp && g) disp.textContent = fmtInput(g[field]);
+  disp.classList.remove('editing');
+  edit.classList.remove('editing');
+}
+
+
+function setSecurity(level) {
+  secLevel = level;
+  document.querySelectorAll('.sec-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === level);
+  });
+  document.getElementById('secDesc').innerHTML = SEC_DESCS[level];
+  calculate();
+}
+
+// ——— CALCULATION ———
+function pert(o, m, p) {
+  const ew = (o + 4 * m + p) / 6;
+  const sd = (p - o) / 6;
+  const variance = sd * sd;
+  return { ew, sd, variance };
+}
+
+function fmt(n) {
+  if (isNaN(n) || n === 0) return '–';
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+}
+
+function fmtShort(n) {
+  if (isNaN(n) || n === 0) return '–';
+  if (n >= 1e6) return (n / 1e6).toFixed(2).replace('.', ',') + ' Mio. €';
+  if (n >= 1e3) return (n / 1e3).toFixed(0) + ' T€';
+  return fmt(n);
+}
+
+function calculate() {
+  if (gewerke.length === 0) {
+    clearResults();
+    return;
+  }
+
+  const results = gewerke.map(g => ({ ...g, ...pert(g.o, g.m, g.p) }));
+
+  const totalEW = results.reduce((s, r) => s + r.ew, 0);
+  const totalVariance = results.reduce((s, r) => s + r.variance, 0);
+  const totalSD = Math.sqrt(totalVariance);
+
+  const budget50 = totalEW;
+  const budget84 = totalEW + totalSD;
+  const budget975 = totalEW + 2 * totalSD;
+
+  // KPIs
+  document.getElementById('kpiEW').textContent = fmtShort(totalEW);
+  document.getElementById('kpi84').textContent = fmtShort(budget84);
+  document.getElementById('kpi975').textContent = fmtShort(budget975);
+  document.getElementById('kpiSD').textContent = fmtShort(totalSD);
+
+  // Project info
+  const bgf = document.getElementById('projBGF').value;
+  const lp = document.getElementById('projLP').value;
+  const pname = document.getElementById('projName').value;
+  document.getElementById('projInfo').textContent = `${pname} · ${lp} · ${bgf} m² BGF`;
+
+  // Table
+  const tbody = document.getElementById('resultsBody');
+  tbody.innerHTML = results.map(r => `
+    <tr>
+      <td>${r.name}</td>
+      <td>${fmt(r.o)}</td>
+      <td>${fmt(r.m)}</td>
+      <td>${fmt(r.p)}</td>
+      <td style="font-weight:600; color:var(--accent3)">${fmt(r.ew)}</td>
+      <td style="color:var(--muted)">${fmt(r.sd)}</td>
+      <td style="color:var(--muted);">${fmt(r.variance).replace('€', 'EUR²')}</td>
+      <td style="color:var(--accent)">${fmt(r.p - r.o)}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('resultsFoot').innerHTML = `
+    <tr>
+      <td>Gesamt (aggregiert)<br><span style="font-size:0.72rem;font-weight:500;opacity:0.75;">© Bernhard Metzger · BuiltSmart Hub</span></td>
+      <td>${fmt(gewerke.reduce((s,g)=>s+g.o,0))}</td>
+      <td>${fmt(gewerke.reduce((s,g)=>s+g.m,0))}</td>
+      <td>${fmt(gewerke.reduce((s,g)=>s+g.p,0))}</td>
+      <td style="color:#ffffff;font-weight:700;">${fmt(totalEW)}</td>
+      <td style="color:#ffffff;">${fmt(totalSD)}</td>
+      <td style="color:#ffffff;">${fmt(totalVariance).replace('€','EUR²')}</td>
+      <td style="color:#ffffff;">${fmt(gewerke.reduce((s,g)=>s+(g.p-g.o),0))}</td>
+    </tr>
+  `;
+
+  updateCharts(results, totalEW, totalSD);
+}
+
+function clearResults() {
+  ['kpiEW','kpi84','kpi975','kpiSD'].forEach(id => document.getElementById(id).textContent = '–');
+  document.getElementById('resultsBody').innerHTML = '<tr><td colspan="8" class="no-data">Noch keine Kostenpositionen erfasst.</td></tr>';
+  document.getElementById('resultsFoot').innerHTML = '';
+}
+
+// ——— CHARTS ———
+function initCharts() {
+  const defOpts = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: { legend: { display: false } },
+    animation: { duration: 400, easing: 'easeInOutQuart' }
+  };
+
+  // Pie
+  chartGewerke = new Chart(document.getElementById('chartGewerke'), {
+    type: 'doughnut',
+    data: { labels: [], datasets: [{ data: [], backgroundColor: COLORS, borderWidth: 2, borderColor: '#f5f2ec' }] },
+    options: {
+      ...defOpts,
+      maintainAspectRatio: false,
+      cutout: '62%',
+      layout: { padding: { top: 6, bottom: 14, left: 0, right: 0 } },
+      plugins: {
+        legend: { display: true, position: 'right', labels: { font: { family: 'Inter', size: 11 }, padding: 8, usePointStyle: true } },
+        tooltip: { callbacks: { label: ctx => `${ctx.label}: ${fmtShort(ctx.raw)}` } }
+      }
+    }
+  });
+
+  // Bar
+  chartSzenarien = new Chart(document.getElementById('chartSzenarien'), {
+    type: 'bar',
+    data: { labels: [], datasets: [
+      { label: 'Optimistisch', data: [], backgroundColor: 'rgba(29,78,216,0.7)', borderRadius: 2 },
+      { label: 'Erwartungswert', data: [], backgroundColor: 'rgba(27,58,107,0.85)', borderRadius: 2 },
+      { label: 'Wahrscheinlich', data: [], backgroundColor: 'rgba(6,95,70,0.7)', borderRadius: 2 },
+      { label: 'Pessimistisch', data: [], backgroundColor: 'rgba(153,27,27,0.7)', borderRadius: 2 },
+    ]},
+    options: {
+      ...defOpts,
+      maintainAspectRatio: false,
+      layout: { padding: { top: 0, bottom: 0 } },
+      plugins: { legend: { display: true, labels: { font: { family: 'Inter', size: 11 }, usePointStyle: true, padding: 8 } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 } } },
+        y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { family: 'Inter', size: 11 }, callback: v => fmtShort(v) } }
+      }
+    }
+  });
+
+  // Distribution
+  chartDist = new Chart(document.getElementById('chartDist'), {
+    type: 'line',
+    data: { labels: [], datasets: [
+      { label: 'Wahrscheinlichkeitsdichte', data: [], borderColor: '#1a3a6b', backgroundColor: 'rgba(26,58,107,0.10)', borderWidth: 2.5, fill: true, tension: 0.4, pointRadius: 0 },
+      { label: '84%-Niveau', data: [], borderColor: '#2b5f3e', backgroundColor: 'rgba(43,95,62,0.15)', borderWidth: 1.5, fill: '+1', borderDash: [5,4], tension: 0, pointRadius: 0 },
+      { label: '97,5%-Niveau', data: [], borderColor: '#c8a030', backgroundColor: 'rgba(200,160,48,0.12)', borderWidth: 1.5, fill: '+1', borderDash: [5,4], tension: 0, pointRadius: 0 },
+    ]},
+    options: {
+      ...defOpts,
+      layout: { padding: { top: 62, bottom: 10, left: 10, right: 10 } },
+      plugins: {
+        legend: { display: false },
+        verticalLines: true
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 }, maxTicksLimit: 8, callback: (_, i) => {
+          const vals = chartDist._xVals;
+          if (!vals) return '';
+          const v = vals[i];
+          return v >= 1e6 ? (v/1e6).toFixed(2).replace('.',',') + 'M' : v >= 1e3 ? (v/1e3).toFixed(0) + 'K' : v;
+        }}},
+        y: { display: false }
+      }
+    },
+    plugins: [{
+      id: 'verticalLines',
+      afterDraw(chart) {
+        if (!chart._vlines || !chart._peakY) return;
+        const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart;
+
+        // ── vertical lines + top labels ──
+        chart._vlines.forEach(line => {
+          const xPx = x.getPixelForValue(line.xIdx);
+          if (xPx < left || xPx > right) return;
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(xPx, top);
+          ctx.lineTo(xPx, bottom);
+          ctx.strokeStyle = line.color;
+          ctx.lineWidth = line.width || 1.5;
+          ctx.setLineDash(line.dash || []);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Two-line label above the chart area — always centered
+          ctx.textAlign = 'center';
+          ctx.font = `700 12.5px Inter, sans-serif`;
+          ctx.fillStyle = line.color;
+          ctx.fillText(line.label2, xPx, top - 38);
+          ctx.font = `600 11px Inter, sans-serif`;
+          ctx.fillStyle = line.color;
+          ctx.fillText(line.label1, xPx, top - 22);
+          ctx.restore();
+        });
+
+        // ── custom legend left of peak ──
+        const lx = left + 12;
+        const peakY = chart._peakY;
+        const legendItems = [
+          { color: '#7a3020', label: 'EW − 2 SD  ·  2,5%-Niveau',  dash: [3,3] },
+          { color: '#9f580a', label: 'EW − 1 SD  ·  16%-Niveau',   dash: [3,3] },
+          { color: '#1a3a6b', label: 'Erwartungswert (EW · 50%)',   dash: [] },
+          { color: '#2b5f3e', label: 'EW + 1 SD  ·  84%-Niveau',   dash: [5,3] },
+          { color: '#c8a030', label: 'EW + 2 SD  ·  97,5%-Niveau', dash: [5,3] },
+        ];
+        const itemH = 23;
+        const boxH = legendItems.length * itemH + 20;
+        const boxY = Math.max(top + 4, peakY - boxH / 2);
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(245,242,236,0.94)';
+        ctx.strokeStyle = 'rgba(180,172,160,0.7)';
+        ctx.lineWidth = 1;
+        const bx = lx - 8, by = boxY - 8, bw = 228, bh = boxH;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bw, bh, 4);
+        ctx.fill();
+        ctx.stroke();
+
+        legendItems.forEach((item, i) => {
+          const ly = boxY + i * itemH + 6;
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(lx, ly);
+          ctx.lineTo(lx + 26, ly);
+          ctx.strokeStyle = item.color;
+          ctx.lineWidth = item.dash.length ? 2 : 3;
+          ctx.setLineDash(item.dash);
+          ctx.stroke();
+          ctx.restore();
+          ctx.font = `600 12px Inter, sans-serif`;
+          ctx.fillStyle = '#0f0e0c';
+          ctx.textAlign = 'left';
+          ctx.fillText(item.label, lx + 32, ly + 4);
+        });
+        ctx.restore();
+      }
+    }]
+  });
+}
+
+function updateCharts(results, totalEW, totalSD) {
+  // Pie
+  chartGewerke.data.labels = results.map(r => r.name);
+  chartGewerke.data.datasets[0].data = results.map(r => r.ew);
+  chartGewerke.update();
+
+  // Bar
+  chartSzenarien.data.labels = results.map(r => r.name.length > 14 ? r.name.substring(0,14)+'…' : r.name);
+  chartSzenarien.data.datasets[0].data = results.map(r => r.o);
+  chartSzenarien.data.datasets[1].data = results.map(r => r.ew);
+  chartSzenarien.data.datasets[2].data = results.map(r => r.m);
+  chartSzenarien.data.datasets[3].data = results.map(r => r.p);
+  chartSzenarien.update();
+
+  // Distribution curve
+  const nPoints = 200;
+  const range = totalSD * 4.5;
+  const xMin = totalEW - range;
+  const xMax = totalEW + range;
+  const xVals = [];
+  const yNormal = [];
+  const y84 = [];
+  const y975 = [];
+  const ewM1 = totalEW - totalSD;
+  const ewM2 = totalEW - 2 * totalSD;
+  const ew84 = totalEW + totalSD;
+  const ew975 = totalEW + 2 * totalSD;
+
+  for (let i = 0; i <= nPoints; i++) {
+    const x = xMin + (xMax - xMin) * i / nPoints;
+    xVals.push(Math.round(x));
+    const exp = -0.5 * Math.pow((x - totalEW) / totalSD, 2);
+    const y = (1 / (totalSD * Math.sqrt(2 * Math.PI))) * Math.exp(exp);
+    yNormal.push(y);
+    y84.push(x <= ew84 ? null : y);
+    y975.push(x <= ew975 ? null : y);
+  }
+
+  chartDist._xVals = xVals;
+  chartDist.data.labels = xVals;
+  chartDist.data.datasets[0].data = yNormal;
+  chartDist.data.datasets[1].data = y84;
+  chartDist.data.datasets[2].data = y975;
+
+  // Vertical marker lines with two-line labels
+  const findIdx = t => xVals.reduce((bi, v, i) => Math.abs(v - t) < Math.abs(xVals[bi] - t) ? i : bi, 0);
+  const ewIdx   = findIdx(totalEW);
+  const sd1Idx  = findIdx(ew84);
+  const sd2Idx  = findIdx(ew975);
+  const sdM1Idx = findIdx(ewM1);
+  const sdM2Idx = findIdx(ewM2);
+
+  chartDist._vlines = [
+    { xIdx: sdM2Idx, color: '#7a3020', width: 1.5, dash: [3,4], label1: 'EW − 2 SD (2,5%)',  label2: fmtShort(ewM2),  side: 'center' },
+    { xIdx: sdM1Idx, color: '#9f580a', width: 1.5, dash: [3,4], label1: 'EW − 1 SD (16%)',   label2: fmtShort(ewM1),  side: 'center' },
+    { xIdx: ewIdx,   color: '#1a3a6b', width: 2.5, dash: [],    label1: 'Erwartungswert',     label2: fmtShort(totalEW), side: 'center' },
+    { xIdx: sd1Idx,  color: '#2b5f3e', width: 1.5, dash: [5,4], label1: 'EW + 1 SD (84%)',   label2: fmtShort(ew84),   side: 'center' },
+    { xIdx: sd2Idx,  color: '#c8a030', width: 1.5, dash: [5,4], label1: 'EW + 2 SD (97,5%)', label2: fmtShort(ew975),  side: 'center' },
+  ];
+
+  // Compute peak Y position (used for legend placement) after next render
+  chartDist.update('none');
+  const sc = chartDist.scales;
+  if (sc && sc.y) {
+    const peakVal = Math.max(...yNormal);
+    chartDist._peakY = sc.y.getPixelForValue(peakVal);
+  }
+  chartDist.update();
+}
+
+// ——— PDF EXPORT ———
+async function exportPDF() {
+  const btn = document.querySelector('button[onclick="exportPDF()"]');
+  const origText = btn.textContent;
+  btn.textContent = '⏳ Wird erstellt…';
+  btn.disabled = true;
+
+  // Let charts fully render
+  await new Promise(r => setTimeout(r, 300));
+
+  // Hide sidebar copyright for PDF capture
+  const copyright = document.querySelector('.sidebar-copyright');
+  if (copyright) copyright.style.visibility = 'hidden';
+
+  try {
+    const { jsPDF } = window.jspdf;
+
+    // Capture full page at 2x scale for sharpness
+    const pageCanvas = await html2canvas(document.body, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#f5f2ec',
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+      width: document.body.scrollWidth,
+      height: document.body.scrollHeight,
+      windowWidth: document.body.scrollWidth,
+      windowHeight: document.body.scrollHeight
+    });
+
+    // PDF dimensions: A4 landscape
+    const PDF_W = 297;
+    const PDF_H = 210;
+    const FOOTER_H = 14;           // reserve mm at bottom of each page for footer
+    const CONTENT_H = PDF_H - FOOTER_H; // usable content height per page
+
+    // Image dimensions in mm (scale-2 canvas: 1 CSS px = 2 canvas px → /2 to get CSS px, then *0.264583 for mm at 96dpi)
+    const imgWmm = pageCanvas.width  / 2 * 0.264583;
+    const imgHmm = pageCanvas.height / 2 * 0.264583;
+
+    // Scale image so its width fits the PDF exactly
+    const scaleFactor = PDF_W / imgWmm;
+    const renderedH = imgHmm * scaleFactor;  // total content height in mm after scaling
+
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
+    const imgData = pageCanvas.toDataURL('image/png');
+
+    const pages = Math.ceil(renderedH / CONTENT_H);
+
+    // Hoist meta outside loop
+    const projName = document.getElementById('projName').value || 'PERT-Analyse';
+    const lp       = document.getElementById('projLP').value;
+    const bgf      = document.getElementById('projBGF').value;
+    const dateStr  = new Date().toLocaleDateString('de-DE');
+
+    const drawFooter = (p) => {
+      // Cream background strip
+      pdf.setFillColor(237, 233, 224);
+      pdf.rect(0, PDF_H - FOOTER_H, PDF_W, FOOTER_H, 'F');
+
+      // Top separator line
+      pdf.setDrawColor(180, 172, 160);
+      pdf.setLineWidth(0.4);
+      pdf.line(0, PDF_H - FOOTER_H, PDF_W, PDF_H - FOOTER_H);
+
+      const fy = PDF_H - FOOTER_H + 8.5; // vertical center of footer text
+
+      // Left: project info
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7);
+      pdf.setTextColor(80, 75, 70);
+      pdf.text(`${projName} · ${lp} · ${bgf} m² BGF · ${dateStr}`, 6, fy);
+
+      // Center: page number
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(100, 95, 88);
+      pdf.text(`Seite ${p + 1} von ${pages}`, PDF_W / 2, fy, { align: 'center' });
+
+      // Right: copyright
+      pdf.setFontSize(7);
+      pdf.setTextColor(80, 75, 70);
+      pdf.text('© Bernhard Metzger · BuiltSmart Hub · www.built-smart-hub.com', PDF_W - 6, fy, { align: 'right' });
+    };
+
+    for (let p = 0; p < pages; p++) {
+      if (p > 0) pdf.addPage();
+
+      // Draw screenshot slice — shift image up by p * CONTENT_H so each page shows correct section
+      const yPos = -(p * CONTENT_H);
+      pdf.addImage(imgData, 'PNG', 0, yPos, PDF_W, renderedH, undefined, 'FAST');
+
+      // Draw footer on top (covers any screenshot bleed into footer zone)
+      drawFooter(p);
+    }
+
+    pdf.save(`${projName.replace(/[\s/\\]/g,'_')}_PERT-Methode.pdf`);
+  } catch(e) {
+    console.error('PDF Fehler:', e);
+    alert('PDF konnte nicht erstellt werden: ' + e.message);
+  }
+
+  // Restore sidebar copyright
+  if (copyright) copyright.style.visibility = '';
+
+  btn.textContent = origText;
+  btn.disabled = false;
+}
+
+
+['projName','projBGF','projLP'].forEach(id => {
+  document.getElementById(id).addEventListener('input', calculate);
+});
+
+// ——— START ———
+init();
+</script>
+</body>
+</html>
